@@ -15,6 +15,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ModulesIndexRouteImport } from './routes/modules.index'
+import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
 
 const SolutionsRoute = SolutionsRouteImport.update({
   id: '/solutions',
@@ -46,6 +47,11 @@ const ModulesIndexRoute = ModulesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ModulesRoute,
 } as any)
+const ModulesSlugRoute = ModulesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ModulesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/modules': typeof ModulesRouteWithChildren
   '/solutions': typeof SolutionsRoute
+  '/modules/$slug': typeof ModulesSlugRoute
   '/modules/': typeof ModulesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/solutions': typeof SolutionsRoute
+  '/modules/$slug': typeof ModulesSlugRoute
   '/modules': typeof ModulesIndexRoute
 }
 export interface FileRoutesById {
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/modules': typeof ModulesRouteWithChildren
   '/solutions': typeof SolutionsRoute
+  '/modules/$slug': typeof ModulesSlugRoute
   '/modules/': typeof ModulesIndexRoute
 }
 export interface FileRouteTypes {
@@ -79,9 +88,10 @@ export interface FileRouteTypes {
     | '/contact'
     | '/modules'
     | '/solutions'
+    | '/modules/$slug'
     | '/modules/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/contact' | '/solutions' | '/modules'
+  to: '/' | '/about' | '/contact' | '/solutions' | '/modules/$slug' | '/modules'
   id:
     | '__root__'
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/modules'
     | '/solutions'
+    | '/modules/$slug'
     | '/modules/'
   fileRoutesById: FileRoutesById
 }
@@ -144,14 +155,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModulesIndexRouteImport
       parentRoute: typeof ModulesRoute
     }
+    '/modules/$slug': {
+      id: '/modules/$slug'
+      path: '/$slug'
+      fullPath: '/modules/$slug'
+      preLoaderRoute: typeof ModulesSlugRouteImport
+      parentRoute: typeof ModulesRoute
+    }
   }
 }
 
 interface ModulesRouteChildren {
+  ModulesSlugRoute: typeof ModulesSlugRoute
   ModulesIndexRoute: typeof ModulesIndexRoute
 }
 
 const ModulesRouteChildren: ModulesRouteChildren = {
+  ModulesSlugRoute: ModulesSlugRoute,
   ModulesIndexRoute: ModulesIndexRoute,
 }
 
