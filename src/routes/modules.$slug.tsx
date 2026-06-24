@@ -1014,14 +1014,15 @@ function InsuranceModule() {
     { id: "CL-77003", patient: "Ken Watanabe", provider: "Cigna", amount: 3120, status: "Rejected" },
   ]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ patient: "", provider: "BlueCross", amount: "" });
+  const emptyClaim = { patientId: "", patient: "", provider: "BlueCross", policy: "", amount: "", status: "Submitted" as Claim["status"], submission: new Date().toISOString().slice(0,10), remarks: "" };
+  const [form, setForm] = useState(emptyClaim);
 
   const submit = async () => {
-    if (!form.patient || !form.amount) { toast.error("Fill all fields"); return; }
+    if (!form.patient || !form.amount || !form.policy) { toast.error("Patient, policy and amount required"); return; }
     await simulateAction("Submitting claim…");
-    const c: Claim = { id: `CL-${77004 + claims.length}`, patient: form.patient, provider: form.provider, amount: Number(form.amount), status: "Submitted" };
-    setClaims(x => [c, ...x]); setOpen(false); setForm({ patient: "", provider: "BlueCross", amount: "" });
-    toast.success(`Claim ${c.id} submitted`);
+    const c: Claim = { id: `CL-${77004 + claims.length}`, patient: form.patient, provider: form.provider, amount: Number(form.amount), status: form.status };
+    setClaims(x => [c, ...x]); setOpen(false); setForm(emptyClaim);
+    toast.success(`Claim ${c.id} submitted · Policy ${form.policy}`);
   };
 
   const setStatus = (id: string, s: Claim["status"]) => { setClaims(x => x.map(c => c.id === id ? { ...c, status: s } : c)); toast.success(`Marked ${s}`); };
