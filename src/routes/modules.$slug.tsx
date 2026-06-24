@@ -263,11 +263,11 @@ function PatientModule() {
   const submitAdd = () => {
     if (!form.name || !form.age) { toast.error("Name and age are required"); return; }
     const id = `P-${1046 + patients.length}`;
-    const p: Patient = { id, name: form.name, age: Number(form.age), gender: form.gender, phone: form.phone || "—", status: "Active", registered: new Date().toISOString().slice(0, 10) };
+    const p: Patient = { id, name: form.name, age: Number(form.age), gender: form.gender, phone: form.phone || "—", status: "Active", registered: form.registered };
     setPatients((x) => [p, ...x]);
     setAddOpen(false);
-    setForm({ name: "", age: "", gender: "Male", phone: "" });
-    toast.success(`Patient ${id} registered`);
+    setForm({ name: "", age: "", gender: "Male", phone: "", address: "", blood: "O+", registered: new Date().toISOString().slice(0,10), file: "" });
+    toast.success(`Patient ${id} registered${form.file ? ` · uploaded ${form.file}` : ""}`);
   };
 
   const remove = (id: string) => { setPatients((x) => x.filter((p) => p.id !== id)); toast.success("Patient deleted"); };
