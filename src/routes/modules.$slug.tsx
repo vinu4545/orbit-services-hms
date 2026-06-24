@@ -827,6 +827,9 @@ function StaffModule() {
   ]);
   const [assignOpen, setAssignOpen] = useState<Staff | null>(null);
   const [duty, setDuty] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const emptyStaff = { name: "", role: "Doctor", dept: "Cardiology", phone: "", shift: "Morning (8-2)", experience: "", status: "On Duty" as "On Duty"|"Off" };
+  const [sf, setSf] = useState(emptyStaff);
 
   const toggleAttendance = (id: string) => setStaff(x => x.map(s => s.id === id ? { ...s, status: s.status === "On Duty" ? "Off" : "On Duty" } : s));
   const assign = () => {
@@ -836,8 +839,20 @@ function StaffModule() {
     toast.success("Duty assigned");
   };
 
+  const addStaff = async () => {
+    if (!sf.name) { toast.error("Name is required"); return; }
+    await simulateAction("Adding staff member…", 700);
+    const id = `S-${String(staff.length + 1).padStart(2,"0")}`;
+    setStaff(x => [{ id, name: sf.name, role: sf.role, dept: sf.dept, status: sf.status, duty: sf.shift }, ...x]);
+    setAddOpen(false); setSf(emptyStaff);
+    toast.success(`${sf.name} added · ${sf.role}`);
+  };
+
   return (
-    <WorkspaceShell title="Doctor & Staff Roster" action={<PrimaryBtn icon={FileDown} onClick={async () => { await simulateAction("Generating duty roster…"); downloadFakeFile("duty-roster.pdf", "Duty Roster"); toast.success("Roster exported"); }}>Export Roster</PrimaryBtn>}>
+    <WorkspaceShell title="Doctor & Staff Roster" action={<>
+      <PrimaryBtn icon={Plus} onClick={() => setAddOpen(true)}>Add Doctor / Staff</PrimaryBtn>
+      <PrimaryBtn variant="ghost" icon={FileDown} onClick={async () => { await simulateAction("Generating duty roster…"); downloadFakeFile("duty-roster.pdf", "Duty Roster"); toast.success("Roster exported"); }}>Export Roster</PrimaryBtn>
+    </>}>
       <div className="grid md:grid-cols-2 gap-4">
         {staff.map(s => (
           <div key={s.id} className="rounded-2xl border p-5 bg-card hover:shadow-elegant transition">
@@ -855,6 +870,7 @@ function StaffModule() {
             <div className="mt-4 flex flex-wrap gap-2">
               <PrimaryBtn size="sm" icon={Stethoscope} onClick={() => { setAssignOpen(s); setDuty(s.duty || ""); }}>Assign Duty</PrimaryBtn>
               <PrimaryBtn size="sm" variant="ghost" onClick={() => toggleAttendance(s.id)}>{s.status === "On Duty" ? "Mark Off" : "Mark On Duty"}</PrimaryBtn>
+              <PrimaryBtn size="sm" variant="ghost" icon={Pencil}>Edit</PrimaryBtn>
             </div>
           </div>
         ))}
@@ -863,6 +879,19 @@ function StaffModule() {
         <><PrimaryBtn variant="ghost" onClick={() => setAssignOpen(null)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={assign}>Assign</PrimaryBtn></>
       }>
         <Select label="Location" value={duty || "OPD-1"} onChange={setDuty} options={["OPD-1","OPD-2","OPD-3","Ward A","Ward B","ICU","OT-1","OT-2","Emergency"]} />
+      </Modal>
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Doctor / Staff" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setSf(emptyStaff)}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setAddOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={addStaff}>Add Staff</PrimaryBtn></>
+      }>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Full Name *" placeholder="Dr. Jane Doe" value={sf.name} onChange={(e) => setSf({ ...sf, name: e.target.value })} />
+          <Select label="Role" value={sf.role} onChange={(v) => setSf({ ...sf, role: v })} options={["Doctor","Nurse","Admin","Technician","Pharmacist","Receptionist"]} />
+          <Select label="Department" value={sf.dept} onChange={(v) => setSf({ ...sf, dept: v })} options={["Cardiology","Pediatrics","Surgery","ICU","Orthopedics","Neurology","ENT","Administration"]} />
+          <Input label="Contact Number" placeholder="+91 ..." value={sf.phone} onChange={(e) => setSf({ ...sf, phone: e.target.value })} />
+          <Select label="Shift Timing" value={sf.shift} onChange={(v) => setSf({ ...sf, shift: v })} options={["Morning (8-2)","Afternoon (2-8)","Night (8-8)","Rotational","On-Call"]} />
+          <Input label="Experience (years)" type="number" placeholder="5" value={sf.experience} onChange={(e) => setSf({ ...sf, experience: e.target.value })} />
+          <Select label="Status" value={sf.status} onChange={(v) => setSf({ ...sf, status: v as "On Duty"|"Off" })} options={["On Duty","Off"]} />
+        </div>
       </Modal>
     </WorkspaceShell>
   );
