@@ -673,12 +673,18 @@ function BillingModule() {
         </table>
       </div>
 
-      <Modal open={genOpen} onClose={() => setGenOpen(false)} title="New invoice" footer={
-        <><PrimaryBtn variant="ghost" onClick={() => setGenOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Receipt} onClick={generate}>Generate</PrimaryBtn></>
+      <Modal open={genOpen} onClose={() => setGenOpen(false)} title="Generate invoice" footer={
+        <><PrimaryBtn variant="ghost" onClick={resetForm}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setGenOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Receipt} onClick={generate}>Generate Invoice</PrimaryBtn></>
       }>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Patient" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} />
-          <Input label="Amount (USD)" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <Input label="Patient ID *" placeholder="P-1042" value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })} />
+          <Input label="Patient Name *" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} />
+          <Select label="Service Type" value={form.service} onChange={(v) => setForm({ ...form, service: v })} options={["Consultation","Diagnostics","Surgery","Pharmacy","Room Charges","Ambulance","Lab Test"]} />
+          <Input label="Charges (USD) *" type="number" placeholder="0.00" value={form.charges} onChange={(e) => setForm({ ...form, charges: e.target.value })} />
+          <Input label="Discount (USD)" type="number" placeholder="0.00" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} />
+          <Select label="Payment Mode" value={form.mode} onChange={(v) => setForm({ ...form, mode: v })} options={["Card","Cash","UPI","Insurance","Bank Transfer"]} />
+          <Input label="Billing Date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          <Select label="Status" value={form.status} onChange={(v) => setForm({ ...form, status: v as "Paid"|"Unpaid" })} options={["Unpaid","Paid"]} />
         </div>
       </Modal>
 
