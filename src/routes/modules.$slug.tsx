@@ -399,6 +399,8 @@ function OpdIpdModule() {
     { id: "V-203", patient: "Ken Watanabe", type: "IPD", doctor: "Dr. Singh", ward: "Ward A · Bed 4", status: "Admitted" },
     { id: "V-204", patient: "Lila Schmidt", type: "IPD", doctor: "Dr. Iyer", ward: "Ward B · Bed 12", status: "Admitted" },
   ]);
+  const [admitOpen, setAdmitOpen] = useState(false);
+  const [adm, setAdm] = useState({ patientId: "", patient: "", type: "IPD" as "OPD"|"IPD", ward: "Ward A · Bed 1", doctor: "Dr. Patel", admission: new Date().toISOString().slice(0,10), discharge: "", notes: "" });
 
   const opd = visits.filter(v => v.type === "OPD");
   const ipd = visits.filter(v => v.type === "IPD");
@@ -408,13 +410,25 @@ function OpdIpdModule() {
   const admit = (id: string) => { setStatus(id, "Admitted"); toast.success("Patient admitted to ward"); };
   const discharge = (id: string) => { setStatus(id, "Discharged"); toast.success("Patient discharged"); };
 
+  const submitAdmit = async () => {
+    if (!adm.patient || !adm.patientId) { toast.error("Patient ID and name required"); return; }
+    await simulateAction("Admitting patient…");
+    const id = `V-${205 + visits.length}`;
+    setVisits(x => [{ id, patient: adm.patient, type: adm.type, doctor: adm.doctor, ward: adm.type === "IPD" ? adm.ward : undefined, status: adm.type === "IPD" ? "Admitted" : "Pending" }, ...x]);
+    setAdmitOpen(false);
+    toast.success(`${adm.patient} admitted · ${id}`);
+  };
+
   return (
     <WorkspaceShell
       title="OPD / IPD Console"
       tabs={["OPD Queue", "IPD Inpatients"]}
       activeTab={tab}
       onTab={setTab}
-      action={<PrimaryBtn icon={FileDown} onClick={async () => { await simulateAction("Exporting daily report…"); downloadFakeFile("opd-ipd-report.pdf", "OPD/IPD daily summary"); toast.success("Report exported"); }}>Export Report</PrimaryBtn>}
+      action={<>
+        <PrimaryBtn icon={Plus} onClick={() => setAdmitOpen(true)}>Admit Patient</PrimaryBtn>
+        <PrimaryBtn variant="ghost" icon={FileDown} onClick={async () => { await simulateAction("Exporting daily report…"); downloadFakeFile("opd-ipd-report.pdf", "OPD/IPD daily summary"); toast.success("Report exported"); }}>Export Report</PrimaryBtn>
+      </>}
     >
       {tab === "OPD Queue" ? (
         <div className="overflow-x-auto">
