@@ -984,6 +984,23 @@ function WardsModule() {
           <Select label="Set status" value={selected.status} onChange={(v) => setBeds(x => x.map(b => b.id === selected.id ? { ...b, status: v as Bed["status"] } : b))} options={["Available","Occupied","Cleaning","Reserved"]} />
         </div>}
       </Modal>
+      <Modal open={assignOpen} onClose={() => setAssignOpen(false)} title="Assign Bed" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setAb(emptyAssign)}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setAssignOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={BedDouble} onClick={assignBed}>Assign Bed</PrimaryBtn></>
+      }>
+        <div className="grid grid-cols-2 gap-3">
+          <Select label="Ward Type" value={ab.wardType} onChange={(v) => setAb({ ...ab, wardType: v })} options={["Ward A","Ward B","ICU","Maternity","Pediatric","Isolation"]} />
+          <Input label="Bed Number *" placeholder="1-50" value={ab.bedNumber} onChange={(e) => setAb({ ...ab, bedNumber: e.target.value })} />
+          <Input label="Patient Assigned *" placeholder="Patient name" value={ab.patient} onChange={(e) => setAb({ ...ab, patient: e.target.value })} />
+          <Select label="Status" value={ab.status} onChange={(v) => setAb({ ...ab, status: v as Bed["status"] })} options={["Occupied","Reserved","Available","Cleaning"]} />
+          <Input label="Admission Date" type="date" value={ab.admission} onChange={(e) => setAb({ ...ab, admission: e.target.value })} />
+          <div className="col-span-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</span>
+              <textarea value={ab.notes} onChange={(e) => setAb({ ...ab, notes: e.target.value })} rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+          </div>
+        </div>
+      </Modal>
     </WorkspaceShell>
   );
 }
