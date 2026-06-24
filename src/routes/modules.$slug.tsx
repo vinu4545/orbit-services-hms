@@ -714,6 +714,8 @@ function EMRModule() {
   const patients = ["Aarav Mehta", "Sara Johnson", "Ken Watanabe"];
   const [patient, setPatient] = useState(patients[0]);
   const [tab, setTab] = useState("Diagnosis");
+  const [recOpen, setRecOpen] = useState(false);
+  const [rec, setRec] = useState({ patientId: "", diagnosis: "", prescription: "", results: "", notes: "", visit: new Date().toISOString().slice(0,10), doctor: "Dr. Patel", file: "" });
 
   const data: Record<string, Record<string, string[]>> = {
     "Aarav Mehta": {
@@ -739,6 +741,14 @@ function EMRModule() {
     toast.success("EMR report downloaded");
   };
 
+  const saveRecord = async () => {
+    if (!rec.patientId || !rec.diagnosis) { toast.error("Patient ID and diagnosis required"); return; }
+    await simulateAction("Saving medical record…", 700);
+    setRecOpen(false);
+    toast.success(`Record saved for ${rec.patientId}${rec.file ? ` · ${rec.file}` : ""}`);
+    setRec({ patientId: "", diagnosis: "", prescription: "", results: "", notes: "", visit: new Date().toISOString().slice(0,10), doctor: "Dr. Patel", file: "" });
+  };
+
   return (
     <WorkspaceShell
       title="Electronic Medical Records"
@@ -747,7 +757,8 @@ function EMRModule() {
       onTab={setTab}
       action={<>
         <Select value={patient} onChange={setPatient} options={patients} />
-        <PrimaryBtn icon={FileDown} onClick={download}>Download Report</PrimaryBtn>
+        <PrimaryBtn icon={Plus} onClick={() => setRecOpen(true)}>New Record</PrimaryBtn>
+        <PrimaryBtn variant="ghost" icon={FileDown} onClick={download}>Download Report</PrimaryBtn>
       </>}
     >
       <div className="grid md:grid-cols-[280px_1fr] gap-5">
