@@ -479,6 +479,25 @@ function OpdIpdModule() {
           ))}
         </div>
       )}
+      <Modal open={admitOpen} onClose={() => setAdmitOpen(false)} title="Admit / Register Visit" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setAdmitOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={BedDouble} onClick={submitAdmit}>{adm.type === "IPD" ? "Admit Patient" : "Add to Queue"}</PrimaryBtn></>
+      }>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Patient ID *" placeholder="P-1042" value={adm.patientId} onChange={(e) => setAdm({ ...adm, patientId: e.target.value })} />
+          <Input label="Patient Name *" value={adm.patient} onChange={(e) => setAdm({ ...adm, patient: e.target.value })} />
+          <Select label="Admission Type" value={adm.type} onChange={(v) => setAdm({ ...adm, type: v as "OPD"|"IPD" })} options={["OPD","IPD"]} />
+          <Select label="Ward Selection" value={adm.ward} onChange={(v) => setAdm({ ...adm, ward: v })} options={["Ward A · Bed 1","Ward A · Bed 4","Ward B · Bed 12","Ward C · Bed 7","ICU · Bed 2"]} />
+          <Select label="Doctor Assigned" value={adm.doctor} onChange={(v) => setAdm({ ...adm, doctor: v })} options={["Dr. Patel","Dr. Kapoor","Dr. Singh","Dr. Iyer","Dr. Lee"]} />
+          <Input label="Admission Date" type="date" value={adm.admission} onChange={(e) => setAdm({ ...adm, admission: e.target.value })} />
+          <Input label="Expected Discharge" type="date" value={adm.discharge} onChange={(e) => setAdm({ ...adm, discharge: e.target.value })} />
+          <div className="col-span-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Clinical Notes</span>
+              <textarea value={adm.notes} onChange={(e) => setAdm({ ...adm, notes: e.target.value })} rows={3} placeholder="Reason for admission, observations…" className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+          </div>
+        </div>
+      </Modal>
     </WorkspaceShell>
   );
 }
