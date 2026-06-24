@@ -616,15 +616,20 @@ function BillingModule() {
   ]);
   const [preview, setPreview] = useState<Bill | null>(null);
   const [genOpen, setGenOpen] = useState(false);
-  const [form, setForm] = useState({ patient: "", amount: "" });
+  const [form, setForm] = useState({ patientId: "", patient: "", service: "Consultation", charges: "", discount: "0", mode: "Card", date: new Date().toISOString().slice(0,10), status: "Unpaid" as "Paid"|"Unpaid" });
 
   const toggle = (id: string) => setBills(x => x.map(b => b.id === id ? { ...b, status: b.status === "Paid" ? "Unpaid" : "Paid" } : b));
 
-  const generate = () => {
-    if (!form.patient || !form.amount) { toast.error("Patient and amount required"); return; }
-    const b: Bill = { id: `INV-${9014 + bills.length}`, patient: form.patient, amount: Number(form.amount), status: "Unpaid", date: new Date().toISOString().slice(0,10) };
-    setBills(x => [b, ...x]); setGenOpen(false); setForm({ patient: "", amount: "" });
+  const resetForm = () => setForm({ patientId: "", patient: "", service: "Consultation", charges: "", discount: "0", mode: "Card", date: new Date().toISOString().slice(0,10), status: "Unpaid" });
+
+  const generate = async () => {
+    if (!form.patient || !form.charges) { toast.error("Patient and charges required"); return; }
+    await simulateAction("Generating invoice…", 700);
+    const amt = Math.max(0, Number(form.charges) - Number(form.discount || 0));
+    const b: Bill = { id: `INV-${9014 + bills.length}`, patient: form.patient, amount: amt, status: form.status, date: form.date };
+    setBills(x => [b, ...x]); setGenOpen(false); resetForm();
     setPreview(b);
+    toast.success(`Invoice ${b.id} generated · ${form.mode}`);
   };
 
   const download = async (b: Bill) => {
