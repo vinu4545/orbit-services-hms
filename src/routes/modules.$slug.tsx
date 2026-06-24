@@ -910,6 +910,9 @@ function WardsModule() {
   });
   const [beds, setBeds] = useState<Bed[]>(initBeds);
   const [selected, setSelected] = useState<Bed | null>(null);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const emptyAssign = { wardType: "Ward A", bedNumber: "", patient: "", status: "Occupied" as Bed["status"], admission: new Date().toISOString().slice(0,10), notes: "" };
+  const [ab, setAb] = useState(emptyAssign);
 
   const cycle = (id: string) => {
     const order: Bed["status"][] = ["Available", "Reserved", "Occupied", "Cleaning"];
@@ -921,10 +924,26 @@ function WardsModule() {
     toast.success("Bed status updated");
   };
 
+  const assignBed = async () => {
+    if (!ab.bedNumber || !ab.patient) { toast.error("Bed number and patient required"); return; }
+    await simulateAction("Assigning bed…", 600);
+    const id = `${ab.wardType[0]}-${ab.bedNumber}`;
+    setBeds(x => {
+      const exists = x.find(b => b.id === id);
+      if (exists) return x.map(b => b.id === id ? { ...b, status: ab.status, patient: ab.patient } : b);
+      return [...x, { id, ward: ab.wardType, status: ab.status, patient: ab.patient }];
+    });
+    setAssignOpen(false); setAb(emptyAssign);
+    toast.success(`Bed ${id} assigned to ${ab.patient}`);
+  };
+
   const counts = beds.reduce<Record<string, number>>((acc, b) => { acc[b.status] = (acc[b.status] || 0) + 1; return acc; }, {});
 
   return (
-    <WorkspaceShell title="Bed & Ward Manager" action={<PrimaryBtn icon={FileDown} onClick={async () => { await simulateAction("Generating occupancy report…"); downloadFakeFile("occupancy.pdf", "Bed occupancy report"); toast.success("Report ready"); }}>Occupancy PDF</PrimaryBtn>}>
+    <WorkspaceShell title="Bed & Ward Manager" action={<>
+      <PrimaryBtn icon={Plus} onClick={() => setAssignOpen(true)}>Assign Bed</PrimaryBtn>
+      <PrimaryBtn variant="ghost" icon={FileDown} onClick={async () => { await simulateAction("Generating occupancy report…"); downloadFakeFile("occupancy.pdf", "Bed occupancy report"); toast.success("Report ready"); }}>Occupancy PDF</PrimaryBtn>
+    </>}>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         {(["Available","Occupied","Cleaning","Reserved"] as const).map(s => (
           <div key={s} className="rounded-2xl border p-4">
