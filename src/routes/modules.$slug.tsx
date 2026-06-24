@@ -251,7 +251,7 @@ function PatientModule() {
   const [addOpen, setAddOpen] = useState(false);
   const [viewing, setViewing] = useState<Patient | null>(null);
   const [editing, setEditing] = useState<Patient | null>(null);
-  const [form, setForm] = useState({ name: "", age: "", gender: "Male", phone: "" });
+  const [form, setForm] = useState({ name: "", age: "", gender: "Male", phone: "", address: "", blood: "O+", registered: new Date().toISOString().slice(0,10), file: "" });
   const [sortKey, setSortKey] = useState<"name" | "age" | "registered">("registered");
 
   const filtered = useMemo(() => {
