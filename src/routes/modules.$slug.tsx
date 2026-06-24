@@ -514,18 +514,28 @@ function AppointmentsModule() {
   ]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [patient, setPatient] = useState("");
+  const [dept, setDept] = useState("General Medicine");
+  const [type, setType] = useState("Consultation");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
 
   const SLOTS = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","14:00","14:30","15:00","15:30","16:00"];
   const booked = new Set(appts.filter(a => a.date === day && a.doctor === doctor).map(a => a.slot));
 
-  const book = () => {
+  const book = async () => {
     if (!selectedSlot || !patient) { toast.error("Pick a slot and enter patient name"); return; }
+    await simulateAction("Booking appointment…", 600);
     const id = `A-${503 + appts.length}`;
     setAppts(x => [...x, { id, patient, doctor, date: day, slot: selectedSlot, status: "Pending" }]);
-    setSelectedSlot(null); setPatient("");
-    toast.success(`Appointment ${id} booked at ${selectedSlot}`);
+    setSelectedSlot(null); setPatient(""); setPhone(""); setNotes("");
+    toast.success(`Appointment ${id} booked at ${selectedSlot} · ${dept} · ${type}`);
   };
 
+  const reschedule = (id: string) => {
+    if (!selectedSlot) { toast.error("Pick a new slot first"); return; }
+    setAppts(x => x.map(a => a.id === id ? { ...a, slot: selectedSlot, date: day } : a));
+    toast.success(`Rescheduled to ${selectedSlot}`);
+  };
   const cancel = (id: string) => { setAppts(x => x.filter(a => a.id !== id)); toast.success("Appointment cancelled"); };
 
   return (
@@ -554,8 +564,22 @@ function AppointmentsModule() {
             })}
           </div>
           <div className="mt-5 rounded-xl border p-4 bg-muted/30 space-y-3">
-            <Input label="Patient" placeholder="Patient name" value={patient} onChange={(e) => setPatient(e.target.value)} />
-            <PrimaryBtn icon={CalendarIcon} onClick={book}>Book Appointment</PrimaryBtn>
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Patient Name *" placeholder="Search or type…" value={patient} onChange={(e) => setPatient(e.target.value)} />
+              <Input label="Contact Number" placeholder="+91 ..." value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <Select label="Department" value={dept} onChange={setDept} options={["General Medicine","Cardiology","Pediatrics","Orthopedics","Neurology","Dermatology","ENT"]} />
+              <Select label="Appointment Type" value={type} onChange={setType} options={["Consultation","Follow-up","Diagnostic","Procedure","Tele-consult"]} />
+              <Input label="Date" type="date" value={day} onChange={(e) => setDay(e.target.value)} />
+              <Input label="Time Slot" type="time" value={selectedSlot ?? ""} onChange={(e) => setSelectedSlot(e.target.value)} />
+            </div>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</span>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Symptoms, prior history…" className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+            <div className="flex gap-2">
+              <PrimaryBtn icon={CalendarIcon} onClick={book}>Book Appointment</PrimaryBtn>
+              <PrimaryBtn variant="ghost" onClick={() => { setPatient(""); setPhone(""); setNotes(""); setSelectedSlot(null); }}>Reset</PrimaryBtn>
+            </div>
           </div>
         </div>
         <div>
@@ -570,6 +594,7 @@ function AppointmentsModule() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge status={a.status} />
+                  <PrimaryBtn size="sm" variant="ghost" onClick={() => reschedule(a.id)}>Reschedule</PrimaryBtn>
                   <PrimaryBtn size="sm" variant="danger" icon={X} onClick={() => cancel(a.id)}>Cancel</PrimaryBtn>
                 </div>
               </div>
