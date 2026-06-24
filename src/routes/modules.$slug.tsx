@@ -332,13 +332,21 @@ function PatientModule() {
       </div>
 
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Register new patient" footer={
-        <><PrimaryBtn variant="ghost" onClick={() => setAddOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={submitAdd}>Register</PrimaryBtn></>
+        <><PrimaryBtn variant="ghost" onClick={() => setForm({ name: "", age: "", gender: "Male", phone: "", address: "", blood: "O+", registered: new Date().toISOString().slice(0,10), file: "" })}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setAddOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={submitAdd}>Register Patient</PrimaryBtn></>
       }>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <Input label="Age" type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+          <Input label="Patient Name *" placeholder="Full legal name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Input label="Age *" type="number" placeholder="In years" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
           <Select label="Gender" value={form.gender} onChange={(v) => setForm({ ...form, gender: v })} options={["Male", "Female", "Other"]} />
-          <Input label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <Input label="Contact Number" placeholder="+91 ..." value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <Select label="Blood Group" value={form.blood} onChange={(v) => setForm({ ...form, blood: v })} options={["A+","A-","B+","B-","O+","O-","AB+","AB-"]} />
+          <Input label="Registration Date" type="date" value={form.registered} onChange={(e) => setForm({ ...form, registered: e.target.value })} />
+          <div className="col-span-2"><Input label="Address" placeholder="House, street, city" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+          <label className="col-span-2 block">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Upload Medical File</span>
+            <input type="file" onChange={(e) => setForm({ ...form, file: e.target.files?.[0]?.name ?? "" })} className="mt-1 w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1.5 file:text-xs file:font-semibold rounded-lg border bg-background px-3 py-2" />
+            {form.file && <span className="text-xs text-success mt-1 block">✓ {form.file}</span>}
+          </label>
         </div>
       </Modal>
 
