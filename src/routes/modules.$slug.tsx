@@ -251,7 +251,7 @@ function PatientModule() {
   const [addOpen, setAddOpen] = useState(false);
   const [viewing, setViewing] = useState<Patient | null>(null);
   const [editing, setEditing] = useState<Patient | null>(null);
-  const [form, setForm] = useState({ name: "", age: "", gender: "Male", phone: "" });
+  const [form, setForm] = useState({ name: "", age: "", gender: "Male", phone: "", address: "", blood: "O+", registered: new Date().toISOString().slice(0,10), file: "" });
   const [sortKey, setSortKey] = useState<"name" | "age" | "registered">("registered");
 
   const filtered = useMemo(() => {
@@ -263,11 +263,11 @@ function PatientModule() {
   const submitAdd = () => {
     if (!form.name || !form.age) { toast.error("Name and age are required"); return; }
     const id = `P-${1046 + patients.length}`;
-    const p: Patient = { id, name: form.name, age: Number(form.age), gender: form.gender, phone: form.phone || "—", status: "Active", registered: new Date().toISOString().slice(0, 10) };
+    const p: Patient = { id, name: form.name, age: Number(form.age), gender: form.gender, phone: form.phone || "—", status: "Active", registered: form.registered };
     setPatients((x) => [p, ...x]);
     setAddOpen(false);
-    setForm({ name: "", age: "", gender: "Male", phone: "" });
-    toast.success(`Patient ${id} registered`);
+    setForm({ name: "", age: "", gender: "Male", phone: "", address: "", blood: "O+", registered: new Date().toISOString().slice(0,10), file: "" });
+    toast.success(`Patient ${id} registered${form.file ? ` · uploaded ${form.file}` : ""}`);
   };
 
   const remove = (id: string) => { setPatients((x) => x.filter((p) => p.id !== id)); toast.success("Patient deleted"); };
@@ -332,13 +332,21 @@ function PatientModule() {
       </div>
 
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Register new patient" footer={
-        <><PrimaryBtn variant="ghost" onClick={() => setAddOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={submitAdd}>Register</PrimaryBtn></>
+        <><PrimaryBtn variant="ghost" onClick={() => setForm({ name: "", age: "", gender: "Male", phone: "", address: "", blood: "O+", registered: new Date().toISOString().slice(0,10), file: "" })}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setAddOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={submitAdd}>Register Patient</PrimaryBtn></>
       }>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <Input label="Age" type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+          <Input label="Patient Name *" placeholder="Full legal name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Input label="Age *" type="number" placeholder="In years" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
           <Select label="Gender" value={form.gender} onChange={(v) => setForm({ ...form, gender: v })} options={["Male", "Female", "Other"]} />
-          <Input label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <Input label="Contact Number" placeholder="+91 ..." value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <Select label="Blood Group" value={form.blood} onChange={(v) => setForm({ ...form, blood: v })} options={["A+","A-","B+","B-","O+","O-","AB+","AB-"]} />
+          <Input label="Registration Date" type="date" value={form.registered} onChange={(e) => setForm({ ...form, registered: e.target.value })} />
+          <div className="col-span-2"><Input label="Address" placeholder="House, street, city" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+          <label className="col-span-2 block">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Upload Medical File</span>
+            <input type="file" onChange={(e) => setForm({ ...form, file: e.target.files?.[0]?.name ?? "" })} className="mt-1 w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1.5 file:text-xs file:font-semibold rounded-lg border bg-background px-3 py-2" />
+            {form.file && <span className="text-xs text-success mt-1 block">✓ {form.file}</span>}
+          </label>
         </div>
       </Modal>
 
@@ -391,6 +399,8 @@ function OpdIpdModule() {
     { id: "V-203", patient: "Ken Watanabe", type: "IPD", doctor: "Dr. Singh", ward: "Ward A · Bed 4", status: "Admitted" },
     { id: "V-204", patient: "Lila Schmidt", type: "IPD", doctor: "Dr. Iyer", ward: "Ward B · Bed 12", status: "Admitted" },
   ]);
+  const [admitOpen, setAdmitOpen] = useState(false);
+  const [adm, setAdm] = useState({ patientId: "", patient: "", type: "IPD" as "OPD"|"IPD", ward: "Ward A · Bed 1", doctor: "Dr. Patel", admission: new Date().toISOString().slice(0,10), discharge: "", notes: "" });
 
   const opd = visits.filter(v => v.type === "OPD");
   const ipd = visits.filter(v => v.type === "IPD");
@@ -400,13 +410,25 @@ function OpdIpdModule() {
   const admit = (id: string) => { setStatus(id, "Admitted"); toast.success("Patient admitted to ward"); };
   const discharge = (id: string) => { setStatus(id, "Discharged"); toast.success("Patient discharged"); };
 
+  const submitAdmit = async () => {
+    if (!adm.patient || !adm.patientId) { toast.error("Patient ID and name required"); return; }
+    await simulateAction("Admitting patient…");
+    const id = `V-${205 + visits.length}`;
+    setVisits(x => [{ id, patient: adm.patient, type: adm.type, doctor: adm.doctor, ward: adm.type === "IPD" ? adm.ward : undefined, status: adm.type === "IPD" ? "Admitted" : "Pending" }, ...x]);
+    setAdmitOpen(false);
+    toast.success(`${adm.patient} admitted · ${id}`);
+  };
+
   return (
     <WorkspaceShell
       title="OPD / IPD Console"
       tabs={["OPD Queue", "IPD Inpatients"]}
       activeTab={tab}
       onTab={setTab}
-      action={<PrimaryBtn icon={FileDown} onClick={async () => { await simulateAction("Exporting daily report…"); downloadFakeFile("opd-ipd-report.pdf", "OPD/IPD daily summary"); toast.success("Report exported"); }}>Export Report</PrimaryBtn>}
+      action={<>
+        <PrimaryBtn icon={Plus} onClick={() => setAdmitOpen(true)}>Admit Patient</PrimaryBtn>
+        <PrimaryBtn variant="ghost" icon={FileDown} onClick={async () => { await simulateAction("Exporting daily report…"); downloadFakeFile("opd-ipd-report.pdf", "OPD/IPD daily summary"); toast.success("Report exported"); }}>Export Report</PrimaryBtn>
+      </>}
     >
       {tab === "OPD Queue" ? (
         <div className="overflow-x-auto">
@@ -457,6 +479,25 @@ function OpdIpdModule() {
           ))}
         </div>
       )}
+      <Modal open={admitOpen} onClose={() => setAdmitOpen(false)} title="Admit / Register Visit" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setAdmitOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={BedDouble} onClick={submitAdmit}>{adm.type === "IPD" ? "Admit Patient" : "Add to Queue"}</PrimaryBtn></>
+      }>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Patient ID *" placeholder="P-1042" value={adm.patientId} onChange={(e) => setAdm({ ...adm, patientId: e.target.value })} />
+          <Input label="Patient Name *" value={adm.patient} onChange={(e) => setAdm({ ...adm, patient: e.target.value })} />
+          <Select label="Admission Type" value={adm.type} onChange={(v) => setAdm({ ...adm, type: v as "OPD"|"IPD" })} options={["OPD","IPD"]} />
+          <Select label="Ward Selection" value={adm.ward} onChange={(v) => setAdm({ ...adm, ward: v })} options={["Ward A · Bed 1","Ward A · Bed 4","Ward B · Bed 12","Ward C · Bed 7","ICU · Bed 2"]} />
+          <Select label="Doctor Assigned" value={adm.doctor} onChange={(v) => setAdm({ ...adm, doctor: v })} options={["Dr. Patel","Dr. Kapoor","Dr. Singh","Dr. Iyer","Dr. Lee"]} />
+          <Input label="Admission Date" type="date" value={adm.admission} onChange={(e) => setAdm({ ...adm, admission: e.target.value })} />
+          <Input label="Expected Discharge" type="date" value={adm.discharge} onChange={(e) => setAdm({ ...adm, discharge: e.target.value })} />
+          <div className="col-span-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Clinical Notes</span>
+              <textarea value={adm.notes} onChange={(e) => setAdm({ ...adm, notes: e.target.value })} rows={3} placeholder="Reason for admission, observations…" className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+          </div>
+        </div>
+      </Modal>
     </WorkspaceShell>
   );
 }
@@ -473,18 +514,28 @@ function AppointmentsModule() {
   ]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [patient, setPatient] = useState("");
+  const [dept, setDept] = useState("General Medicine");
+  const [type, setType] = useState("Consultation");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
 
   const SLOTS = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","14:00","14:30","15:00","15:30","16:00"];
   const booked = new Set(appts.filter(a => a.date === day && a.doctor === doctor).map(a => a.slot));
 
-  const book = () => {
+  const book = async () => {
     if (!selectedSlot || !patient) { toast.error("Pick a slot and enter patient name"); return; }
+    await simulateAction("Booking appointment…", 600);
     const id = `A-${503 + appts.length}`;
     setAppts(x => [...x, { id, patient, doctor, date: day, slot: selectedSlot, status: "Pending" }]);
-    setSelectedSlot(null); setPatient("");
-    toast.success(`Appointment ${id} booked at ${selectedSlot}`);
+    setSelectedSlot(null); setPatient(""); setPhone(""); setNotes("");
+    toast.success(`Appointment ${id} booked at ${selectedSlot} · ${dept} · ${type}`);
   };
 
+  const reschedule = (id: string) => {
+    if (!selectedSlot) { toast.error("Pick a new slot first"); return; }
+    setAppts(x => x.map(a => a.id === id ? { ...a, slot: selectedSlot, date: day } : a));
+    toast.success(`Rescheduled to ${selectedSlot}`);
+  };
   const cancel = (id: string) => { setAppts(x => x.filter(a => a.id !== id)); toast.success("Appointment cancelled"); };
 
   return (
@@ -513,8 +564,22 @@ function AppointmentsModule() {
             })}
           </div>
           <div className="mt-5 rounded-xl border p-4 bg-muted/30 space-y-3">
-            <Input label="Patient" placeholder="Patient name" value={patient} onChange={(e) => setPatient(e.target.value)} />
-            <PrimaryBtn icon={CalendarIcon} onClick={book}>Book Appointment</PrimaryBtn>
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Patient Name *" placeholder="Search or type…" value={patient} onChange={(e) => setPatient(e.target.value)} />
+              <Input label="Contact Number" placeholder="+91 ..." value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <Select label="Department" value={dept} onChange={setDept} options={["General Medicine","Cardiology","Pediatrics","Orthopedics","Neurology","Dermatology","ENT"]} />
+              <Select label="Appointment Type" value={type} onChange={setType} options={["Consultation","Follow-up","Diagnostic","Procedure","Tele-consult"]} />
+              <Input label="Date" type="date" value={day} onChange={(e) => setDay(e.target.value)} />
+              <Input label="Time Slot" type="time" value={selectedSlot ?? ""} onChange={(e) => setSelectedSlot(e.target.value)} />
+            </div>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</span>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Symptoms, prior history…" className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+            <div className="flex gap-2">
+              <PrimaryBtn icon={CalendarIcon} onClick={book}>Book Appointment</PrimaryBtn>
+              <PrimaryBtn variant="ghost" onClick={() => { setPatient(""); setPhone(""); setNotes(""); setSelectedSlot(null); }}>Reset</PrimaryBtn>
+            </div>
           </div>
         </div>
         <div>
@@ -529,6 +594,7 @@ function AppointmentsModule() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge status={a.status} />
+                  <PrimaryBtn size="sm" variant="ghost" onClick={() => reschedule(a.id)}>Reschedule</PrimaryBtn>
                   <PrimaryBtn size="sm" variant="danger" icon={X} onClick={() => cancel(a.id)}>Cancel</PrimaryBtn>
                 </div>
               </div>
@@ -550,15 +616,20 @@ function BillingModule() {
   ]);
   const [preview, setPreview] = useState<Bill | null>(null);
   const [genOpen, setGenOpen] = useState(false);
-  const [form, setForm] = useState({ patient: "", amount: "" });
+  const [form, setForm] = useState({ patientId: "", patient: "", service: "Consultation", charges: "", discount: "0", mode: "Card", date: new Date().toISOString().slice(0,10), status: "Unpaid" as "Paid"|"Unpaid" });
 
   const toggle = (id: string) => setBills(x => x.map(b => b.id === id ? { ...b, status: b.status === "Paid" ? "Unpaid" : "Paid" } : b));
 
-  const generate = () => {
-    if (!form.patient || !form.amount) { toast.error("Patient and amount required"); return; }
-    const b: Bill = { id: `INV-${9014 + bills.length}`, patient: form.patient, amount: Number(form.amount), status: "Unpaid", date: new Date().toISOString().slice(0,10) };
-    setBills(x => [b, ...x]); setGenOpen(false); setForm({ patient: "", amount: "" });
+  const resetForm = () => setForm({ patientId: "", patient: "", service: "Consultation", charges: "", discount: "0", mode: "Card", date: new Date().toISOString().slice(0,10), status: "Unpaid" });
+
+  const generate = async () => {
+    if (!form.patient || !form.charges) { toast.error("Patient and charges required"); return; }
+    await simulateAction("Generating invoice…", 700);
+    const amt = Math.max(0, Number(form.charges) - Number(form.discount || 0));
+    const b: Bill = { id: `INV-${9014 + bills.length}`, patient: form.patient, amount: amt, status: form.status, date: form.date };
+    setBills(x => [b, ...x]); setGenOpen(false); resetForm();
     setPreview(b);
+    toast.success(`Invoice ${b.id} generated · ${form.mode}`);
   };
 
   const download = async (b: Bill) => {
@@ -602,12 +673,18 @@ function BillingModule() {
         </table>
       </div>
 
-      <Modal open={genOpen} onClose={() => setGenOpen(false)} title="New invoice" footer={
-        <><PrimaryBtn variant="ghost" onClick={() => setGenOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Receipt} onClick={generate}>Generate</PrimaryBtn></>
+      <Modal open={genOpen} onClose={() => setGenOpen(false)} title="Generate invoice" footer={
+        <><PrimaryBtn variant="ghost" onClick={resetForm}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setGenOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Receipt} onClick={generate}>Generate Invoice</PrimaryBtn></>
       }>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Patient" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} />
-          <Input label="Amount (USD)" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <Input label="Patient ID *" placeholder="P-1042" value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })} />
+          <Input label="Patient Name *" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} />
+          <Select label="Service Type" value={form.service} onChange={(v) => setForm({ ...form, service: v })} options={["Consultation","Diagnostics","Surgery","Pharmacy","Room Charges","Ambulance","Lab Test"]} />
+          <Input label="Charges (USD) *" type="number" placeholder="0.00" value={form.charges} onChange={(e) => setForm({ ...form, charges: e.target.value })} />
+          <Input label="Discount (USD)" type="number" placeholder="0.00" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} />
+          <Select label="Payment Mode" value={form.mode} onChange={(v) => setForm({ ...form, mode: v })} options={["Card","Cash","UPI","Insurance","Bank Transfer"]} />
+          <Input label="Billing Date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          <Select label="Status" value={form.status} onChange={(v) => setForm({ ...form, status: v as "Paid"|"Unpaid" })} options={["Unpaid","Paid"]} />
         </div>
       </Modal>
 
@@ -637,6 +714,8 @@ function EMRModule() {
   const patients = ["Aarav Mehta", "Sara Johnson", "Ken Watanabe"];
   const [patient, setPatient] = useState(patients[0]);
   const [tab, setTab] = useState("Diagnosis");
+  const [recOpen, setRecOpen] = useState(false);
+  const [rec, setRec] = useState({ patientId: "", diagnosis: "", prescription: "", results: "", notes: "", visit: new Date().toISOString().slice(0,10), doctor: "Dr. Patel", file: "" });
 
   const data: Record<string, Record<string, string[]>> = {
     "Aarav Mehta": {
@@ -662,6 +741,14 @@ function EMRModule() {
     toast.success("EMR report downloaded");
   };
 
+  const saveRecord = async () => {
+    if (!rec.patientId || !rec.diagnosis) { toast.error("Patient ID and diagnosis required"); return; }
+    await simulateAction("Saving medical record…", 700);
+    setRecOpen(false);
+    toast.success(`Record saved for ${rec.patientId}${rec.file ? ` · ${rec.file}` : ""}`);
+    setRec({ patientId: "", diagnosis: "", prescription: "", results: "", notes: "", visit: new Date().toISOString().slice(0,10), doctor: "Dr. Patel", file: "" });
+  };
+
   return (
     <WorkspaceShell
       title="Electronic Medical Records"
@@ -670,7 +757,8 @@ function EMRModule() {
       onTab={setTab}
       action={<>
         <Select value={patient} onChange={setPatient} options={patients} />
-        <PrimaryBtn icon={FileDown} onClick={download}>Download Report</PrimaryBtn>
+        <PrimaryBtn icon={Plus} onClick={() => setRecOpen(true)}>New Record</PrimaryBtn>
+        <PrimaryBtn variant="ghost" icon={FileDown} onClick={download}>Download Report</PrimaryBtn>
       </>}
     >
       <div className="grid md:grid-cols-[280px_1fr] gap-5">
@@ -701,6 +789,29 @@ function EMRModule() {
           </ul>
         </div>
       </div>
+      <Modal open={recOpen} onClose={() => setRecOpen(false)} title="New Medical Record" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setRecOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={saveRecord}>Save Record</PrimaryBtn></>
+      }>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Patient ID *" placeholder="P-1042" value={rec.patientId} onChange={(e) => setRec({ ...rec, patientId: e.target.value })} />
+          <Input label="Visit Date" type="date" value={rec.visit} onChange={(e) => setRec({ ...rec, visit: e.target.value })} />
+          <Select label="Doctor" value={rec.doctor} onChange={(v) => setRec({ ...rec, doctor: v })} options={["Dr. Patel","Dr. Kapoor","Dr. Singh","Dr. Iyer","Dr. Lee"]} />
+          <Input label="Diagnosis *" placeholder="ICD-10 code or text" value={rec.diagnosis} onChange={(e) => setRec({ ...rec, diagnosis: e.target.value })} />
+          <div className="col-span-2"><Input label="Prescription" placeholder="Drug, dose, frequency" value={rec.prescription} onChange={(e) => setRec({ ...rec, prescription: e.target.value })} /></div>
+          <div className="col-span-2"><Input label="Test Results" placeholder="Lab/imaging findings" value={rec.results} onChange={(e) => setRec({ ...rec, results: e.target.value })} /></div>
+          <div className="col-span-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Doctor Notes</span>
+              <textarea value={rec.notes} onChange={(e) => setRec({ ...rec, notes: e.target.value })} rows={3} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+          </div>
+          <label className="col-span-2 block">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Upload Report</span>
+            <input type="file" onChange={(e) => setRec({ ...rec, file: e.target.files?.[0]?.name ?? "" })} className="mt-1 w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1.5 file:text-xs file:font-semibold rounded-lg border bg-background px-3 py-2" />
+            {rec.file && <span className="text-xs text-success mt-1 block">✓ {rec.file}</span>}
+          </label>
+        </div>
+      </Modal>
     </WorkspaceShell>
   );
 }
@@ -716,6 +827,9 @@ function StaffModule() {
   ]);
   const [assignOpen, setAssignOpen] = useState<Staff | null>(null);
   const [duty, setDuty] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const emptyStaff = { name: "", role: "Doctor", dept: "Cardiology", phone: "", shift: "Morning (8-2)", experience: "", status: "On Duty" as "On Duty"|"Off" };
+  const [sf, setSf] = useState(emptyStaff);
 
   const toggleAttendance = (id: string) => setStaff(x => x.map(s => s.id === id ? { ...s, status: s.status === "On Duty" ? "Off" : "On Duty" } : s));
   const assign = () => {
@@ -725,8 +839,20 @@ function StaffModule() {
     toast.success("Duty assigned");
   };
 
+  const addStaff = async () => {
+    if (!sf.name) { toast.error("Name is required"); return; }
+    await simulateAction("Adding staff member…", 700);
+    const id = `S-${String(staff.length + 1).padStart(2,"0")}`;
+    setStaff(x => [{ id, name: sf.name, role: sf.role, dept: sf.dept, status: sf.status, duty: sf.shift }, ...x]);
+    setAddOpen(false); setSf(emptyStaff);
+    toast.success(`${sf.name} added · ${sf.role}`);
+  };
+
   return (
-    <WorkspaceShell title="Doctor & Staff Roster" action={<PrimaryBtn icon={FileDown} onClick={async () => { await simulateAction("Generating duty roster…"); downloadFakeFile("duty-roster.pdf", "Duty Roster"); toast.success("Roster exported"); }}>Export Roster</PrimaryBtn>}>
+    <WorkspaceShell title="Doctor & Staff Roster" action={<>
+      <PrimaryBtn icon={Plus} onClick={() => setAddOpen(true)}>Add Doctor / Staff</PrimaryBtn>
+      <PrimaryBtn variant="ghost" icon={FileDown} onClick={async () => { await simulateAction("Generating duty roster…"); downloadFakeFile("duty-roster.pdf", "Duty Roster"); toast.success("Roster exported"); }}>Export Roster</PrimaryBtn>
+    </>}>
       <div className="grid md:grid-cols-2 gap-4">
         {staff.map(s => (
           <div key={s.id} className="rounded-2xl border p-5 bg-card hover:shadow-elegant transition">
@@ -744,6 +870,7 @@ function StaffModule() {
             <div className="mt-4 flex flex-wrap gap-2">
               <PrimaryBtn size="sm" icon={Stethoscope} onClick={() => { setAssignOpen(s); setDuty(s.duty || ""); }}>Assign Duty</PrimaryBtn>
               <PrimaryBtn size="sm" variant="ghost" onClick={() => toggleAttendance(s.id)}>{s.status === "On Duty" ? "Mark Off" : "Mark On Duty"}</PrimaryBtn>
+              <PrimaryBtn size="sm" variant="ghost" icon={Pencil}>Edit</PrimaryBtn>
             </div>
           </div>
         ))}
@@ -752,6 +879,19 @@ function StaffModule() {
         <><PrimaryBtn variant="ghost" onClick={() => setAssignOpen(null)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={assign}>Assign</PrimaryBtn></>
       }>
         <Select label="Location" value={duty || "OPD-1"} onChange={setDuty} options={["OPD-1","OPD-2","OPD-3","Ward A","Ward B","ICU","OT-1","OT-2","Emergency"]} />
+      </Modal>
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Doctor / Staff" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setSf(emptyStaff)}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setAddOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={addStaff}>Add Staff</PrimaryBtn></>
+      }>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Full Name *" placeholder="Dr. Jane Doe" value={sf.name} onChange={(e) => setSf({ ...sf, name: e.target.value })} />
+          <Select label="Role" value={sf.role} onChange={(v) => setSf({ ...sf, role: v })} options={["Doctor","Nurse","Admin","Technician","Pharmacist","Receptionist"]} />
+          <Select label="Department" value={sf.dept} onChange={(v) => setSf({ ...sf, dept: v })} options={["Cardiology","Pediatrics","Surgery","ICU","Orthopedics","Neurology","ENT","Administration"]} />
+          <Input label="Contact Number" placeholder="+91 ..." value={sf.phone} onChange={(e) => setSf({ ...sf, phone: e.target.value })} />
+          <Select label="Shift Timing" value={sf.shift} onChange={(v) => setSf({ ...sf, shift: v })} options={["Morning (8-2)","Afternoon (2-8)","Night (8-8)","Rotational","On-Call"]} />
+          <Input label="Experience (years)" type="number" placeholder="5" value={sf.experience} onChange={(e) => setSf({ ...sf, experience: e.target.value })} />
+          <Select label="Status" value={sf.status} onChange={(v) => setSf({ ...sf, status: v as "On Duty"|"Off" })} options={["On Duty","Off"]} />
+        </div>
       </Modal>
     </WorkspaceShell>
   );
@@ -770,6 +910,9 @@ function WardsModule() {
   });
   const [beds, setBeds] = useState<Bed[]>(initBeds);
   const [selected, setSelected] = useState<Bed | null>(null);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const emptyAssign = { wardType: "Ward A", bedNumber: "", patient: "", status: "Occupied" as Bed["status"], admission: new Date().toISOString().slice(0,10), notes: "" };
+  const [ab, setAb] = useState(emptyAssign);
 
   const cycle = (id: string) => {
     const order: Bed["status"][] = ["Available", "Reserved", "Occupied", "Cleaning"];
@@ -781,10 +924,26 @@ function WardsModule() {
     toast.success("Bed status updated");
   };
 
+  const assignBed = async () => {
+    if (!ab.bedNumber || !ab.patient) { toast.error("Bed number and patient required"); return; }
+    await simulateAction("Assigning bed…", 600);
+    const id = `${ab.wardType[0]}-${ab.bedNumber}`;
+    setBeds(x => {
+      const exists = x.find(b => b.id === id);
+      if (exists) return x.map(b => b.id === id ? { ...b, status: ab.status, patient: ab.patient } : b);
+      return [...x, { id, ward: ab.wardType, status: ab.status, patient: ab.patient }];
+    });
+    setAssignOpen(false); setAb(emptyAssign);
+    toast.success(`Bed ${id} assigned to ${ab.patient}`);
+  };
+
   const counts = beds.reduce<Record<string, number>>((acc, b) => { acc[b.status] = (acc[b.status] || 0) + 1; return acc; }, {});
 
   return (
-    <WorkspaceShell title="Bed & Ward Manager" action={<PrimaryBtn icon={FileDown} onClick={async () => { await simulateAction("Generating occupancy report…"); downloadFakeFile("occupancy.pdf", "Bed occupancy report"); toast.success("Report ready"); }}>Occupancy PDF</PrimaryBtn>}>
+    <WorkspaceShell title="Bed & Ward Manager" action={<>
+      <PrimaryBtn icon={Plus} onClick={() => setAssignOpen(true)}>Assign Bed</PrimaryBtn>
+      <PrimaryBtn variant="ghost" icon={FileDown} onClick={async () => { await simulateAction("Generating occupancy report…"); downloadFakeFile("occupancy.pdf", "Bed occupancy report"); toast.success("Report ready"); }}>Occupancy PDF</PrimaryBtn>
+    </>}>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         {(["Available","Occupied","Cleaning","Reserved"] as const).map(s => (
           <div key={s} className="rounded-2xl border p-4">
@@ -825,6 +984,23 @@ function WardsModule() {
           <Select label="Set status" value={selected.status} onChange={(v) => setBeds(x => x.map(b => b.id === selected.id ? { ...b, status: v as Bed["status"] } : b))} options={["Available","Occupied","Cleaning","Reserved"]} />
         </div>}
       </Modal>
+      <Modal open={assignOpen} onClose={() => setAssignOpen(false)} title="Assign Bed" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setAb(emptyAssign)}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setAssignOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={BedDouble} onClick={assignBed}>Assign Bed</PrimaryBtn></>
+      }>
+        <div className="grid grid-cols-2 gap-3">
+          <Select label="Ward Type" value={ab.wardType} onChange={(v) => setAb({ ...ab, wardType: v })} options={["Ward A","Ward B","ICU","Maternity","Pediatric","Isolation"]} />
+          <Input label="Bed Number *" placeholder="1-50" value={ab.bedNumber} onChange={(e) => setAb({ ...ab, bedNumber: e.target.value })} />
+          <Input label="Patient Assigned *" placeholder="Patient name" value={ab.patient} onChange={(e) => setAb({ ...ab, patient: e.target.value })} />
+          <Select label="Status" value={ab.status} onChange={(v) => setAb({ ...ab, status: v as Bed["status"] })} options={["Occupied","Reserved","Available","Cleaning"]} />
+          <Input label="Admission Date" type="date" value={ab.admission} onChange={(e) => setAb({ ...ab, admission: e.target.value })} />
+          <div className="col-span-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</span>
+              <textarea value={ab.notes} onChange={(e) => setAb({ ...ab, notes: e.target.value })} rows={2} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+          </div>
+        </div>
+      </Modal>
     </WorkspaceShell>
   );
 }
@@ -838,14 +1014,15 @@ function InsuranceModule() {
     { id: "CL-77003", patient: "Ken Watanabe", provider: "Cigna", amount: 3120, status: "Rejected" },
   ]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ patient: "", provider: "BlueCross", amount: "" });
+  const emptyClaim = { patientId: "", patient: "", provider: "BlueCross", policy: "", amount: "", status: "Submitted" as Claim["status"], submission: new Date().toISOString().slice(0,10), remarks: "" };
+  const [form, setForm] = useState(emptyClaim);
 
   const submit = async () => {
-    if (!form.patient || !form.amount) { toast.error("Fill all fields"); return; }
+    if (!form.patient || !form.amount || !form.policy) { toast.error("Patient, policy and amount required"); return; }
     await simulateAction("Submitting claim…");
-    const c: Claim = { id: `CL-${77004 + claims.length}`, patient: form.patient, provider: form.provider, amount: Number(form.amount), status: "Submitted" };
-    setClaims(x => [c, ...x]); setOpen(false); setForm({ patient: "", provider: "BlueCross", amount: "" });
-    toast.success(`Claim ${c.id} submitted`);
+    const c: Claim = { id: `CL-${77004 + claims.length}`, patient: form.patient, provider: form.provider, amount: Number(form.amount), status: form.status };
+    setClaims(x => [c, ...x]); setOpen(false); setForm(emptyClaim);
+    toast.success(`Claim ${c.id} submitted · Policy ${form.policy}`);
   };
 
   const setStatus = (id: string, s: Claim["status"]) => { setClaims(x => x.map(c => c.id === id ? { ...c, status: s } : c)); toast.success(`Marked ${s}`); };
@@ -880,13 +1057,23 @@ function InsuranceModule() {
           </tbody>
         </table>
       </div>
-      <Modal open={open} onClose={() => setOpen(false)} title="Submit insurance claim" footer={
-        <><PrimaryBtn variant="ghost" onClick={() => setOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={ArrowRight} onClick={submit}>Submit</PrimaryBtn></>
+      <Modal open={open} onClose={() => setOpen(false)} title="Submit Insurance Claim" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setForm(emptyClaim)}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={ArrowRight} onClick={submit}>Submit Claim</PrimaryBtn></>
       }>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Patient" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} />
-          <Select label="Provider" value={form.provider} onChange={(v) => setForm({ ...form, provider: v })} options={["BlueCross","Aetna","Cigna","UnitedHealth","Star Health"]} />
-          <Input label="Amount (USD)" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <Input label="Patient ID *" placeholder="P-1042" value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })} />
+          <Input label="Patient Name *" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} />
+          <Select label="Insurance Provider" value={form.provider} onChange={(v) => setForm({ ...form, provider: v })} options={["BlueCross","Aetna","Cigna","UnitedHealth","Star Health","HDFC ERGO","ICICI Lombard"]} />
+          <Input label="Policy Number *" placeholder="POL-XXXXXX" value={form.policy} onChange={(e) => setForm({ ...form, policy: e.target.value })} />
+          <Input label="Claim Amount (USD) *" type="number" placeholder="0.00" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <Select label="Approval Status" value={form.status} onChange={(v) => setForm({ ...form, status: v as Claim["status"] })} options={["Submitted","Approved","Rejected","Paid"]} />
+          <Input label="Submission Date" type="date" value={form.submission} onChange={(e) => setForm({ ...form, submission: e.target.value })} />
+          <div className="col-span-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Remarks</span>
+              <textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} rows={2} placeholder="Pre-auth, claim notes, supporting docs…" className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+          </div>
         </div>
       </Modal>
     </WorkspaceShell>
