@@ -1057,13 +1057,23 @@ function InsuranceModule() {
           </tbody>
         </table>
       </div>
-      <Modal open={open} onClose={() => setOpen(false)} title="Submit insurance claim" footer={
-        <><PrimaryBtn variant="ghost" onClick={() => setOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={ArrowRight} onClick={submit}>Submit</PrimaryBtn></>
+      <Modal open={open} onClose={() => setOpen(false)} title="Submit Insurance Claim" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setForm(emptyClaim)}>Reset</PrimaryBtn><PrimaryBtn variant="ghost" onClick={() => setOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={ArrowRight} onClick={submit}>Submit Claim</PrimaryBtn></>
       }>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Patient" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} />
-          <Select label="Provider" value={form.provider} onChange={(v) => setForm({ ...form, provider: v })} options={["BlueCross","Aetna","Cigna","UnitedHealth","Star Health"]} />
-          <Input label="Amount (USD)" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <Input label="Patient ID *" placeholder="P-1042" value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })} />
+          <Input label="Patient Name *" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} />
+          <Select label="Insurance Provider" value={form.provider} onChange={(v) => setForm({ ...form, provider: v })} options={["BlueCross","Aetna","Cigna","UnitedHealth","Star Health","HDFC ERGO","ICICI Lombard"]} />
+          <Input label="Policy Number *" placeholder="POL-XXXXXX" value={form.policy} onChange={(e) => setForm({ ...form, policy: e.target.value })} />
+          <Input label="Claim Amount (USD) *" type="number" placeholder="0.00" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <Select label="Approval Status" value={form.status} onChange={(v) => setForm({ ...form, status: v as Claim["status"] })} options={["Submitted","Approved","Rejected","Paid"]} />
+          <Input label="Submission Date" type="date" value={form.submission} onChange={(e) => setForm({ ...form, submission: e.target.value })} />
+          <div className="col-span-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Remarks</span>
+              <textarea value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} rows={2} placeholder="Pre-auth, claim notes, supporting docs…" className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+          </div>
         </div>
       </Modal>
     </WorkspaceShell>
