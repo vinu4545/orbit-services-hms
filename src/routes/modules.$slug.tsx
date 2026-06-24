@@ -789,6 +789,29 @@ function EMRModule() {
           </ul>
         </div>
       </div>
+      <Modal open={recOpen} onClose={() => setRecOpen(false)} title="New Medical Record" footer={
+        <><PrimaryBtn variant="ghost" onClick={() => setRecOpen(false)}>Cancel</PrimaryBtn><PrimaryBtn icon={Check} onClick={saveRecord}>Save Record</PrimaryBtn></>
+      }>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Patient ID *" placeholder="P-1042" value={rec.patientId} onChange={(e) => setRec({ ...rec, patientId: e.target.value })} />
+          <Input label="Visit Date" type="date" value={rec.visit} onChange={(e) => setRec({ ...rec, visit: e.target.value })} />
+          <Select label="Doctor" value={rec.doctor} onChange={(v) => setRec({ ...rec, doctor: v })} options={["Dr. Patel","Dr. Kapoor","Dr. Singh","Dr. Iyer","Dr. Lee"]} />
+          <Input label="Diagnosis *" placeholder="ICD-10 code or text" value={rec.diagnosis} onChange={(e) => setRec({ ...rec, diagnosis: e.target.value })} />
+          <div className="col-span-2"><Input label="Prescription" placeholder="Drug, dose, frequency" value={rec.prescription} onChange={(e) => setRec({ ...rec, prescription: e.target.value })} /></div>
+          <div className="col-span-2"><Input label="Test Results" placeholder="Lab/imaging findings" value={rec.results} onChange={(e) => setRec({ ...rec, results: e.target.value })} /></div>
+          <div className="col-span-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Doctor Notes</span>
+              <textarea value={rec.notes} onChange={(e) => setRec({ ...rec, notes: e.target.value })} rows={3} className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+          </div>
+          <label className="col-span-2 block">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Upload Report</span>
+            <input type="file" onChange={(e) => setRec({ ...rec, file: e.target.files?.[0]?.name ?? "" })} className="mt-1 w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:px-3 file:py-1.5 file:text-xs file:font-semibold rounded-lg border bg-background px-3 py-2" />
+            {rec.file && <span className="text-xs text-success mt-1 block">✓ {rec.file}</span>}
+          </label>
+        </div>
+      </Modal>
     </WorkspaceShell>
   );
 }
