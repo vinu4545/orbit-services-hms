@@ -6,6 +6,9 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+const isVercel = !!process.env.VERCEL;
+const nitroPreset = process.env.NITRO_PRESET || (isVercel ? "node-server" : "cloudflare-module");
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -13,7 +16,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   nitro: {
-    preset: process.env.NITRO_PRESET || "node-server",
+    preset: nitroPreset,
     prerender: {
       crawlLinks: true,
       routes: ["/sitemap.xml", "/robots.txt"],
