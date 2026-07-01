@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import logo from "@/assets/logo.svg";
+import logo from "@/assets/logo.png";
 import {
   Users, BedDouble, Calendar, Receipt, FileHeart, Stethoscope, Hotel, ShieldCheck,
   ChevronDown, Menu, X, Phone, Mail, MapPin
