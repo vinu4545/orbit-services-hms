@@ -12,4 +12,20 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: {
+    preset: process.env.NITRO_PRESET || "node-server",
+    prerender: {
+      crawlLinks: true,
+      routes: ["/sitemap.xml", "/robots.txt"],
+      ignore: ["/404"],
+    },
+    output: {
+      dir: "dist/server",
+    },
+    rollupConfig: {
+      output: {
+        entryFileNames: "server.mjs",
+      },
+    },
+  },
 });
