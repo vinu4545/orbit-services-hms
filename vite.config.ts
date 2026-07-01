@@ -6,8 +6,9 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// Auto-detect environment and set appropriate Nitro preset
 const isVercel = !!process.env.VERCEL;
-const nitroPreset = process.env.NITRO_PRESET || (isVercel ? "node-server" : "cloudflare-module");
+const nitroPreset = process.env.NITRO_PRESET || (isVercel ? "vercel" : "node-server");
 
 export default defineConfig({
   tanstackStart: {
@@ -22,13 +23,11 @@ export default defineConfig({
       routes: ["/sitemap.xml", "/robots.txt"],
       ignore: ["/404"],
     },
-    output: {
-      dir: "dist/server",
-    },
-    rollupConfig: {
+    // Ensure consistent output structure for dist/server on local builds
+    ...(isVercel ? {} : {
       output: {
-        entryFileNames: "server.mjs",
+        dir: "dist/server",
       },
-    },
+    }),
   },
 });
