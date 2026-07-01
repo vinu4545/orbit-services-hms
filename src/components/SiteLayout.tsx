@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import logo from "@/assets/logo.jpg.asset.json";
+import logo from "@/assets/logo.svg";
 import {
   Users, BedDouble, Calendar, Receipt, FileHeart, Stethoscope, Hotel, ShieldCheck,
   ChevronDown, Menu, X, Phone, Mail, MapPin
@@ -33,7 +33,7 @@ function Navbar() {
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 group">
-          <img src={logo.url} alt="Orbit HMS logo" className="h-10 w-10 rounded-lg object-contain bg-white p-1 ring-1 ring-border" />
+          <img src={logo} alt="Orbit HMS logo" className="h-10 w-10 rounded-lg object-contain bg-white p-1 ring-1 ring-border" />
           <div className="leading-tight">
             <div className="font-extrabold text-lg tracking-tight"><span className="text-gradient">Orbit</span> HMS</div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">by Orbit Services</div>
@@ -118,7 +118,7 @@ function Footer() {
       <div className="mx-auto max-w-7xl px-6 py-14 grid gap-10 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <img src={logo.url} alt="Orbit HMS" className="h-9 w-9 rounded-lg bg-white p-1 ring-1 ring-border" />
+            <img src={logo} alt="Orbit HMS" className="h-9 w-9 rounded-lg bg-white p-1 ring-1 ring-border" />
             <div className="font-bold text-lg"><span className="text-gradient">Orbit</span> HMS</div>
           </div>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
